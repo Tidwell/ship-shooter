@@ -1,45 +1,12 @@
 (function() {
-	function ctg(x) {
-		return 1 / Math.tan(x);
-	}
-
 	function getImg(img) {
 		return document.querySelectorAll('.imgs .'+img)[0].cloneNode(true);
 	}
 	
 	function reducer(state = {
-		activeImg: getImg('galleon'),
-		canFindTreasure: true,
-		canOpenTreasure: false,
-		treasureFalse: true,
-		score: 0
+		activeImg: getImg('galleon')
 	}, action) {
 		switch(action.type) {
-			case 'FINDSHIP':
-				const newState = Object.assign({}, state, {
-					treasureOpened: false,
-					canFindTreasure: true,
-					activeImg: getImg('galleon')
-				});
-				if (state.treasureOpened) {
-					newState.score = state.score += 1;
-				}
-				return newState;
-			
-			case 'FINDTREASURE':
-				return Object.assign({}, state, {
-					canFindTreasure: false,
-					canOpenTreasure: true,
-					activeImg: getImg('chest'),
-				});
-
-			case 'OPENTREASURE':
-				return Object.assign({}, state, {
-					canOpenTreasure: false,
-					activeImg: getImg('chest-open'),
-					treasureOpened: true
-				});
-			
 			default:
 				return state;
 		}
@@ -50,20 +17,6 @@
 	store.subscribe(() => {
 	  render();
 	});
-
-
-	function click(e) {
-		
-		// const state = store.getState();
-		// if (state.canFindTreasure) {
-		// 	return store.dispatch({ type: 'FINDTREASURE' });
-		// }
-		// if (state.canOpenTreasure) {
-		// 	return store.dispatch({ type: 'OPENTREASURE' });
-		// }
-
-		// store.dispatch({ type: 'FINDSHIP' });
-	}
 
 	function clickDoc(e) {
 		var balls = document.getElementsByClassName('cannonball');
@@ -87,35 +40,13 @@
 
 	function render() {
 		const state = store.getState();
-		// document.querySelectorAll('#app')[0].innerHTML = '';
+
 		document.querySelectorAll('#app')[0].appendChild(state.activeImg);
-		// document.querySelectorAll('.score')[0].innerHTML = state.score;
 	}
 
 	
 	document.onmousemove = handleMouseMove;
     function handleMouseMove(event) {
-        var dot, eventDoc, doc, body, pageX, pageY;
-
-        event = event || window.event; // IE-ism
-
-        // If pageX/Y aren't available and clientX/Y are,
-        // calculate pageX/Y - logic taken from jQuery.
-        // (This is to support old IE)
-        if (event.pageX == null && event.clientX != null) {
-            eventDoc = (event.target && event.target.ownerDocument) || document;
-            doc = eventDoc.documentElement;
-            body = eventDoc.body;
-
-            event.pageX = event.clientX +
-              (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-              (doc && doc.clientLeft || body && body.clientLeft || 0);
-            event.pageY = event.clientY +
-              (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
-              (doc && doc.clientTop  || body && body.clientTop  || 0 );
-        }
-
-        // Use event.pageX / event.pageY here
         var op = Math.abs(window.innerHeight - event.pageY);
         var adj = Math.abs((window.innerWidth / 2) - event.pageX);
 
@@ -133,7 +64,6 @@
 	document.addEventListener('DOMContentLoaded', render);
 
 	document.querySelectorAll('#win button')[0].addEventListener('click', reset);
-	document.querySelectorAll('#app')[0].addEventListener('click', click);
 	document.addEventListener('click', clickDoc);
 
 	function reset() {
@@ -181,9 +111,6 @@
 			}
 		}
 	},200);
-
-	document.body.requestPointerLock();
-
 
 	// make some waves.
 var ocean = document.getElementById("ocean"),

@@ -1,13 +1,13 @@
-(function() {
+(function($) {
 	let music;
 
 	function getImg(img) {
 		return document.querySelectorAll('.imgs .' + img)[0].cloneNode(true);
 	}
 
-	function $(qs) {
-		return document.querySelectorAll(qs)[0];
-	}
+	// function $(qs) {
+	// 	return document.querySelectorAll(qs)[0];
+	// }
 
 	function isCollide(a, b) {
 		return !(
@@ -78,8 +78,9 @@
 
 	let store = Redux.createStore(reducer);
 
+	const throttledRender = $.throttle( 15, renderOnStoreChange );
 	store.subscribe(() => {
-		renderOnStoreChange();
+		throttledRender();
 	});
 
 	/*
@@ -90,7 +91,7 @@
 	function createCannonBall() {
 		const ball = document.createElement('div');
 		ball.className = 'cannonball';
-		$('body').appendChild(ball);
+		$('body').append(ball);
 	}
 
 	function renderOnStoreChange() {
@@ -98,44 +99,47 @@
 
 		let galleonContainer = $('.galleon-container');
 		let galleon = $('#app .galleon');
-		if (!galleon) {
-			galleonContainer = document.createElement('div');
-			galleonContainer.className = 'galleon-container';
-			galleonContainer.appendChild(getImg('galleon'));
-			galleon = $('#app').appendChild(galleonContainer);
+		if (!galleon.length) {
+			galleonContainer = $('<div class="galleon-container"></div>');
+			galleonContainer.append(getImg('galleon'));
+			galleon = $('#app').append(galleonContainer);
 		}
 
 		const cannon = $('.cannon-container .cannon');
 
-		if (!cannon) {
-			$('.cannon-container').appendChild(getImg('cannon'));
+		if (!cannon.length) {
+			$('.cannon-container').append(getImg('cannon'));
 		}
 
 		//render cannon rotation
-		$('body').style = '--cursor-rotate: ' + state.cannonRotationDegrees + 'deg';
+		$('body').css('--cursor-rotate', state.cannonRotationDegrees + 'deg');
 
-		if ((state.cannonBallTargetX || state.cannonBallTargetY) && !$('.cannonball')) {
+		if ((state.cannonBallTargetX || state.cannonBallTargetY) && !$('.cannonball').length) {
+			$('.cannon-container').addClass('fired');
+			setTimeout(function() {
+				$('.cannon-container').removeClass('fired');
+			}, 250);
 			createCannonBall();
-			let style = '--cursor-clicked-top: ' + state.cannonBallTargetY + 'px;';
-			style += '--cursor-clicked-left: ' + state.cannonBallTargetX + 'px';
-			$('.cannonball').style = style;
+			$('.cannonball').css('--cursor-clicked-top', state.cannonBallTargetY + 'px');
+			$('.cannonball').css('--cursor-clicked-left', state.cannonBallTargetX + 'px');
+
 			if (state.sound) {
 				createjs.Sound.play('cannon');
 			}
-		} else if ($('.cannonball') && !state.cannonBallTargetX && !state.cannonBallTargetY) {
-			$('.cannonball').parentNode.removeChild($('.cannonball'));
+		} else if ($('.cannonball').length && !state.cannonBallTargetX && !state.cannonBallTargetY) {
+			$('.cannonball').remove();
 		}
 
 		//render gallion being hit
-		galleon.dataset.hits = state.score;
-		galleonContainer.dataset.hits = state.score;
+		galleon[0].dataset.hits = state.score;
+		galleonContainer[0].dataset.hits = state.score;
 
 		if (state.isHit) {
-			$('.galleon-container').appendChild(getImg('pyro'));
-			$('#app').className = 'hit';
+			$('.galleon-container').append(getImg('pyro'));
+			$('#app').addClass('hit');
 			setTimeout(function() {
-				$('#app').className = '';
-				$('.galleon-container .pyro').parentNode.removeChild($('.galleon-container .pyro'));
+				$('#app').removeClass('hit');
+				$('.galleon-container .pyro').remove();
 			}, 500);
 			store.dispatch({
 				type: 'HAS_BEEN_HIT'
@@ -147,20 +151,20 @@
 		}
 
 		//update score		
-		$('.score').innerHTML = state.score;
+		$('.score').html(state.score);
 
 		//win screen
 		if (state.hasWon) {
-			$('#win').style.display = 'block';
+			$('#win').show();
 		} else {
-			$('#win').style.display = 'none';
+			$('#win').hide();
 		}
 
 		if (!state.sound) {
-			$('body').className = 'sound-disabled';
+			$('body').addClass('sound-disabled');
 			createjs.Sound.stop();
 		} else {
-			$('body').className = '';
+			$('body').removeClass('sound-disabled');
 			if (music) {
 				music.play();
 			}
@@ -225,13 +229,14 @@
 	}
 
 
-	document.addEventListener('mousemove', aimCannon);
+	const throttledAim = $.throttle( 15, aimCannon );
+	document.addEventListener('mousemove', throttledAim);
 
 	document.addEventListener('click', fireCannon);
 
-	$('#win button').addEventListener('click', reset);
+	$('#win button').on('click', reset);
 
-	$('#chrome .sound').addEventListener('click', toggleSound);
+	$('#chrome .sound').on('click', toggleSound);
 
 	/*
 	
@@ -241,8 +246,8 @@
 	setInterval(function() {
 		const state = store.getState();
 
-		var gal = $('#app .galleon');
-		var ball = $('.cannonball');
+		var gal = $('#app .galleon')[0];
+		var ball = $('.cannonball')[0];
 
 		if (gal && ball && isCollide(gal.getBoundingClientRect(), ball.getBoundingClientRect())) {
 			store.dispatch({
@@ -270,12 +275,12 @@
 	for (var i = 0; i < waveCount; i++) {
 		var wave = document.createElement('div');
 		wave.className += ' wave';
-		docFrag.appendChild(wave);
+		docFrag.append(wave);
 		wave.style.left = i * waveWidth + 'px';
 		wave.style.webkitAnimationDelay = (i / 100) + 's';
 	}
 
-	ocean.appendChild(docFrag);
+	ocean.append(docFrag);
 
 	renderOnStoreChange();
 
@@ -289,4 +294,4 @@
 		music.volume = 0.45;
 	}
 
-}());
+}(jQuery));

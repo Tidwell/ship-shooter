@@ -1,4 +1,6 @@
 html, body {
+	--ball-travel: .5;
+	--ship-travel-time: 15;
 	height: 100%;
 	width: 100%;
 }
@@ -28,10 +30,10 @@ body {
 	box-shadow: 0 0 5vh #000;
 
 	background:
-linear-gradient(135deg, #708090 22px, #d9ecff 22px, #d9ecff 24px, transparent 24px, transparent 67px, #d9ecff 67px, #d9ecff 69px, transparent 69px),
-linear-gradient(225deg, #708090 22px, #d9ecff 22px, #d9ecff 24px, transparent 24px, transparent 67px, #d9ecff 67px, #d9ecff 69px, transparent 69px)0 64px;
-background-color:#708090;
-background-size: 64px 128px
+		linear-gradient(135deg, #708090 22px, #d9ecff 22px, #d9ecff 24px, transparent 24px, transparent 67px, #d9ecff 67px, #d9ecff 69px, transparent 69px),
+		linear-gradient(225deg, #708090 22px, #d9ecff 22px, #d9ecff 24px, transparent 24px, transparent 67px, #d9ecff 67px, #d9ecff 69px, transparent 69px)0 64px;
+		background-color:#708090;
+		background-size: 64px 128px
 }
 #chrome > div {
 	display: inline-block;
@@ -68,7 +70,7 @@ background-size: 64px 128px
 	top: 12vh;
 	position: relative;
 	left: 0;
-	animation: back-forth 10s infinite;
+	animation: back-forth calc(1s * var(--ship-travel-time)) infinite;
 	cursor: crosshair;
 }
 
@@ -200,6 +202,16 @@ background-size: 64px 128px
 .cannon-container svg {
 	width: 16vw;
 }
+.cannon-container svg g path {
+	transition: all calc(1s * var(--ball-travel) / 2);
+}
+.cannon-container.fired {
+	bottom: -20.5vh;
+	transition: all calc(1s * var(--ball-travel));
+}
+.cannon-container.fired svg g path {
+	opacity: .9;
+}
 
 .cannonball {
 	z-index: 3;
@@ -210,7 +222,7 @@ background-size: 64px 128px
 	position: absolute;
 	left: calc(50% + 1.5vw);
 	bottom: 0;
-	animation: ball-fly .5s;
+	animation: ball-fly calc(1s * var(--ball-travel));
 }
 
 button {
@@ -251,7 +263,7 @@ button:hover {
   width:10px;
   position:absolute;
   -webkit-animation-name:             dostuff; 
-  -webkit-animation-duration:         10s; 
+  -webkit-animation-duration:         calc(1s * var(--ship-travel-time)); 
   -webkit-animation-iteration-count:  infinite;
   -webkit-transition-timing-function: ease-in-out;
 }

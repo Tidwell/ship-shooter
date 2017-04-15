@@ -1,0 +1,72 @@
+.pyro {
+  --translate-distance: 200px;
+  top: -50px;
+  position: relative;
+}
+.pyro > .before, .pyro > .after {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff, 0 0 #fff;
+  animation: 1s bang ease-out infinite backwards, 1s gravity ease-in infinite backwards, 5s position linear infinite backwards;
+}
+.pyro > .after {
+  animation-delay: 1.25s, 1.25s, 1.25s;
+  animation-duration: 1.25s, 1.25s, 6.25s;
+}
+@keyframes bang {
+  to {
+    box-shadow: 216px 11.33333px red,
+      146px 56.66667px brown,
+      10px 47.66667px red,
+      73px 69.66667px yellow,
+      80px 79.66667px brown,
+      25px 24.66667px red,
+      33px 4.66667px yellow,
+      36px 330.66667px brown,
+      80px 184.66667px red,
+      57px 72.66667px yellow,
+      87px 87.66667px brown,
+      5px 49.33333px red,
+      56px 226.66667px brown,
+      20px 67.66667px red,
+      83px 49.66667px yellow,
+      90px 19.66667px brown,
+      35px 24.66667px red,
+      43px 24.66667px yellow,
+      46px 30.66667px brown,
+      90px 14.66667px red,
+      67px 52.66667px yellow,
+      97px 87.66667px brown,
+      15px 59.33333px red;
+  }
+}
+@keyframes gravity {
+  to {
+    transform: translateY(var(--translate-distance));
+    opacity: 0;
+  }
+}
+@keyframes position {
+  0%, 19.9% {
+    margin-top: 1%;
+    margin-left: 40%;
+  }
+  20%, 39.9% {
+    margin-top: 4%;
+    margin-left: 30%;
+  }
+  40%, 59.9% {
+    margin-top: 2%;
+    margin-left: 70%;
+  }
+  60%, 79.9% {
+    margin-top: 3%;
+    margin-left: 20%;
+  }
+  80%, 99.9% {
+    margin-top: 3%;
+    margin-left: 80%;
+  }
+}

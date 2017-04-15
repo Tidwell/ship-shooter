@@ -41,21 +41,43 @@ background-size: 64px 128px
 	font-family: Helvetica;
 	text-shadow: 0 0 3px #000;
 }
+#chrome .sound .disabled {
+	display: none;
+}
+.sound-disabled #chrome .sound .enabled {
+	display: none;
+}
+.sound-disabled #chrome .sound .disabled {
+	display: block;
+}
+#chrome .sound {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
 #app {
 	position: relative;
 	z-index: 100;
 }
 #app svg {
-	width: 10vw;
-	height: 10vw;
+	width: 8vw;
+	height: 8vw;
 }
-#app svg.galleon {
-	display: block;
-	top: 10vh;
+#app .galleon-container {
+	display: inline-block;
+	top: 12vh;
 	position: relative;
 	left: 0;
 	animation: back-forth 10s infinite;
 	cursor: crosshair;
+}
+
+#app .galleon-container[data-hits='5'] svg {
+	opacity: 0;
+	fill: black;
+	margin-top: 20vh;
+	transition: all 1s;
+	filter: blur(10vw);
 }
 
 #app svg.chest > path,
@@ -107,7 +129,7 @@ background-size: 64px 128px
 	fill: #710a0a;
 
 }
-#app svg.galleon[data-hits='3'] g path{
+#app svg.galleon[data-hits='4'] g path{
 	fill: #770404;
 
 }
@@ -116,6 +138,14 @@ background-size: 64px 128px
 }
 #app.hit svg.galleon g path {
 	animation: blink .5s;
+}
+#app.hit svg.galleon[data-hits='4'] g path,
+#app.hit svg.galleon[data-hits='5'] g path {
+	animation: blink-hard .5s;
+}
+
+.galleon-container {
+	position: relative;
 }
 
 #win {
@@ -136,8 +166,19 @@ background-size: 64px 128px
 }
 
 @keyframes blink {
-	50% { fill: red;}
+	 0% { transform: rotate(0deg); }
+	 50% { fill: red; transform: rotate(3deg); }
+   55% { transform: rotate(-2deg); }
+   60% { transform: rotate(2deg); }
+  100% { transform: rotate(0deg); }
+}
 
+@keyframes blink-hard {
+	 0% { transform: rotate(0deg); }
+	 50% { fill: red; transform: rotate(5deg); }
+   55% { transform: rotate(-5deg); }
+   60% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
 }
 
 @keyframes back-forth {
@@ -168,10 +209,22 @@ background-size: 64px 128px
 	background: radial-gradient(circle at 100px 100px, #3d3d3d, #000);
 	position: absolute;
 	left: calc(50% + 1.5vw);
+	bottom: 0;
 	animation: ball-fly .5s;
 }
 
-
+button {
+	display: block;
+	padding: 1em;
+	margin: 0 auto;
+	font-size: 20px;
+	font-weight: bold;
+	border-color: black;
+}
+button:hover {
+	background: black;
+	color: white;
+}
 
 
 #ocean{

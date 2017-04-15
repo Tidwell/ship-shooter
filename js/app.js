@@ -1,12 +1,76 @@
 (function() {
+	let music;
+
 	function getImg(img) {
-		return document.querySelectorAll('.imgs .'+img)[0].cloneNode(true);
+		return document.querySelectorAll('.imgs .' + img)[0].cloneNode(true);
 	}
+
+	function $(qs) {
+		return document.querySelectorAll(qs)[0];
+	}
+
+	function isCollide(a, b) {
+		return !(
+			((a.top + a.height) < (b.top)) ||
+			(a.top > (b.top + b.height)) ||
+			((a.left + a.width) < b.left) ||
+			(a.left > (b.left + b.width))
+		);
+	}
+
+	/*
 	
-	function reducer(state = {
-		activeImg: getImg('galleon')
-	}, action) {
-		switch(action.type) {
+	*** STATE MANAGER ***
+
+	 */
+
+	const initialState = {
+		sound: true,
+		hasWon: false,
+		score: 0,
+		hasFired: false,
+		cannonBallTargetX: 0,
+		cannonBallTargetY: 0,
+		cannonRotationDegrees: 0,
+		isHit: false
+	};
+
+	function reducer(state = initialState, action) {
+		switch (action.type) {
+			case 'HIT':
+				return Object.assign({}, state, {
+					score: state.score + 1,
+					isHit: true
+				});
+			case 'HAS_BEEN_HIT':
+				return Object.assign({}, state, {
+					isHit: false
+				});
+			case 'RESET':
+				return Object.assign({}, state, initialState);
+			case 'FIRE_CANNONBALL':
+				return Object.assign({}, state, {
+					cannonBallTargetX: action.target.x,
+					cannonBallTargetY: action.target.y,
+				});
+			case 'CANNONBALL_SINK':
+				return Object.assign({}, state, {
+					cannonBallTargetX: 0,
+					cannonBallTargetY: 0
+				});
+			case 'AIM_CANNON':
+				return Object.assign({}, state, {
+					cannonRotationDegrees: action.degrees
+				});
+			case 'WIN':
+				return Object.assign({}, state, {
+					hasWon: true
+				});
+			case 'TOGGLE_SOUND':
+				initialState.sound = !state.sound;
+				return Object.assign({}, state, {
+					sound: !state.sound
+				});
 			default:
 				return state;
 		}
@@ -15,118 +79,214 @@
 	let store = Redux.createStore(reducer);
 
 	store.subscribe(() => {
-	  render();
+		renderOnStoreChange();
 	});
 
-	function clickDoc(e) {
-		var balls = document.getElementsByClassName('cannonball');
-		if (balls[0]) {
-			balls[0].parentNode.removeChild(balls[0]);
-		}
+	/*
+	
+	*** RENDERING ***
 
+	 */
+	function createCannonBall() {
 		const ball = document.createElement('div');
 		ball.className = 'cannonball';
-		document.querySelectorAll('body')[0].appendChild(ball);
-		let style = '--cursor-clicked-top: '+e.pageY+'px;';
-		style += '--cursor-clicked-left: '+e.pageX+'px';
-		document.querySelectorAll('.cannonball')[0].style = style;
+		$('body').appendChild(ball);
+	}
 
-		setTimeout(function() {
-			if (document.querySelectorAll('.cannonball').length) {
-				document.querySelectorAll('body')[0].removeChild(ball);
+	function renderOnStoreChange() {
+		const state = store.getState();
+
+		let galleonContainer = $('.galleon-container');
+		let galleon = $('#app .galleon');
+		if (!galleon) {
+			galleonContainer = document.createElement('div');
+			galleonContainer.className = 'galleon-container';
+			galleonContainer.appendChild(getImg('galleon'));
+			galleon = $('#app').appendChild(galleonContainer);
+		}
+
+		const cannon = $('.cannon-container .cannon');
+
+		if (!cannon) {
+			$('.cannon-container').appendChild(getImg('cannon'));
+		}
+
+		//render cannon rotation
+		$('body').style = '--cursor-rotate: ' + state.cannonRotationDegrees + 'deg';
+
+		if ((state.cannonBallTargetX || state.cannonBallTargetY) && !$('.cannonball')) {
+			createCannonBall();
+			let style = '--cursor-clicked-top: ' + state.cannonBallTargetY + 'px;';
+			style += '--cursor-clicked-left: ' + state.cannonBallTargetX + 'px';
+			$('.cannonball').style = style;
+			if (state.sound) {
+				createjs.Sound.play('cannon');
 			}
+		} else if ($('.cannonball') && !state.cannonBallTargetX && !state.cannonBallTargetY) {
+			$('.cannonball').parentNode.removeChild($('.cannonball'));
+		}
+
+		//render gallion being hit
+		galleon.dataset.hits = state.score;
+		galleonContainer.dataset.hits = state.score;
+
+		if (state.isHit) {
+			$('.galleon-container').appendChild(getImg('pyro'));
+			$('#app').className = 'hit';
+			setTimeout(function() {
+				$('#app').className = '';
+				$('.galleon-container .pyro').parentNode.removeChild($('.galleon-container .pyro'));
+			}, 500);
+			store.dispatch({
+				type: 'HAS_BEEN_HIT'
+			});
+			if (state.sound) {
+				const hit = createjs.Sound.play('hit');
+				hit.volume = .5;
+			}
+		}
+
+		//update score		
+		$('.score').innerHTML = state.score;
+
+		//win screen
+		if (state.hasWon) {
+			$('#win').style.display = 'block';
+		} else {
+			$('#win').style.display = 'none';
+		}
+
+		if (!state.sound) {
+			$('body').className = 'sound-disabled';
+			createjs.Sound.stop();
+		} else {
+			$('body').className = '';
+			if (music) {
+				music.play();
+			}
+		}
+	}
+
+	/*
+	
+	*** EVENT HANDLING ***
+
+	 */
+	
+	let sinkTimeout;
+
+	function fireCannon(e) {
+		const state = store.getState();
+		if (state.cannonBallTargetX && state.cannonBallTargetY) {
+			return;
+		}
+		store.dispatch({
+			type: 'FIRE_CANNONBALL',
+			target: {
+				x: e.pageX,
+				y: e.pageY
+			}
+		});
+
+
+		sinkTimeout = setTimeout(function() {
+			store.dispatch({
+				type: 'CANNONBALL_SINK'
+			});
 		}, 500);
 	}
 
-	function render() {
-		const state = store.getState();
+	function aimCannon(event) {
 
-		document.querySelectorAll('#app')[0].appendChild(state.activeImg);
+		var op = Math.abs(window.innerHeight - event.pageY);
+		var adj = Math.abs((window.innerWidth / 2) - event.pageX);
+
+		var angle = (Math.atan2(adj, op) * (180 / Math.PI));
+		if (event.pageX < window.innerWidth / 2) {
+			angle *= -1;
+		}
+
+		store.dispatch({
+			type: 'AIM_CANNON',
+			degrees: angle
+		});
 	}
-
-	
-	document.onmousemove = handleMouseMove;
-    function handleMouseMove(event) {
-        var op = Math.abs(window.innerHeight - event.pageY);
-        var adj = Math.abs((window.innerWidth / 2) - event.pageX);
-
-        var angle = (Math.atan2(adj,op)*(180/Math.PI));
-        if (event.pageX < window.innerWidth/2) {
-        	angle *= -1;
-        }
-        document.querySelectorAll('body')[0].style = '--cursor-rotate: '+angle+'deg';
-
-    }
-
-
-	document.querySelectorAll('.cannon-container')[0].appendChild(getImg('cannon'));
-
-	document.addEventListener('DOMContentLoaded', render);
-
-	document.querySelectorAll('#win button')[0].addEventListener('click', reset);
-	document.addEventListener('click', clickDoc);
 
 	function reset() {
-		hitCount = 0;
-		document.querySelectorAll('#win')[0].style.display = 'none';
-		delete document.querySelectorAll('#app .galleon')[0].dataset.hits;
-		document.querySelectorAll('.score')[0].innerHTML = 0;
+		store.dispatch({
+			type: 'RESET'
+		});
 	}
 
-	function isCollide(a, b) {
-	    return !(
-	        ((a.y + a.height) < (b.y)) ||
-	        (a.y > (b.y + b.height)) ||
-	        ((a.x + a.width) < b.x) ||
-	        (a.x > (b.x + b.width))
-	    );
+	function toggleSound() {
+		store.dispatch({
+			type: 'TOGGLE_SOUND'
+		});
 	}
 
-	var hitCount = 0;
+
+	document.addEventListener('mousemove', aimCannon);
+
+	document.addEventListener('click', fireCannon);
+
+	$('#win button').addEventListener('click', reset);
+
+	$('#chrome .sound').addEventListener('click', toggleSound);
+
+	/*
+	
+	*** EVENT LOOP ***
+
+	 */
 	setInterval(function() {
-		var gal = document.querySelectorAll('#app .galleon')[0];
-		var ball = document.querySelectorAll('.cannonball')[0];
+		const state = store.getState();
 
-		if (gal && ball) {
-			var galData = gal.getBoundingClientRect();
-			galData.x = galData.left;
-			galData.y = galData.top;
-			var ballData = ball.getBoundingClientRect();
-			ballData.x = ballData.left;
-			ballData.y = ballData.top;
-			if (isCollide(galData, ballData)) {
-				hitCount++;
-				gal.dataset.hits = hitCount;
-				document.querySelectorAll('.score')[0].innerHTML = hitCount;
-				if (hitCount === 5) {
-					document.querySelectorAll('#win')[0].style.display = 'block';
-				}
-				document.querySelectorAll('#app')[0].className = 'hit';
-				setTimeout(function() {
-					document.querySelectorAll('#app')[0].className = '';
-				}, 500);
-				ball.parentNode.removeChild(ball);
-				
+		var gal = $('#app .galleon');
+		var ball = $('.cannonball');
 
-			}
+		if (gal && ball && isCollide(gal.getBoundingClientRect(), ball.getBoundingClientRect())) {
+			store.dispatch({
+				type: 'HIT'
+			});
+			store.dispatch({
+				type: 'CANNONBALL_SINK'
+			});
+			clearTimeout(sinkTimeout);
 		}
-	},200);
+
+		if (state.score === 5) {
+			store.dispatch({
+				type: 'WIN'
+			});
+		}
+	}, 200);
 
 	// make some waves.
-var ocean = document.getElementById("ocean"),
-    waveWidth = 10,
-    waveCount = Math.floor(window.innerWidth/waveWidth),
-    docFrag = document.createDocumentFragment();
+	var ocean = document.getElementById('ocean'),
+		waveWidth = 10,
+		waveCount = Math.floor(window.innerWidth / waveWidth),
+		docFrag = document.createDocumentFragment();
 
-for(var i = 0; i < waveCount; i++){
-  var wave = document.createElement("div");
-  wave.className += " wave";
-  docFrag.appendChild(wave);
-  wave.style.left = i * waveWidth + "px";
-  wave.style.webkitAnimationDelay = (i/100) + "s";
-}
+	for (var i = 0; i < waveCount; i++) {
+		var wave = document.createElement('div');
+		wave.className += ' wave';
+		docFrag.appendChild(wave);
+		wave.style.left = i * waveWidth + 'px';
+		wave.style.webkitAnimationDelay = (i / 100) + 's';
+	}
 
-ocean.appendChild(docFrag);
+	ocean.appendChild(docFrag);
 
+	renderOnStoreChange();
+
+	createjs.Sound.on('fileload', handleLoadComplete);
+	createjs.Sound.alternateExtensions = ['mp3'];
+	createjs.Sound.registerSound('sound/cannon.mp3', 'cannon', 4);
+	createjs.Sound.registerSound('sound/music.mp3', 'music');
+	createjs.Sound.registerSound('sound/hit.mp3', 'hit', 4);
+	function handleLoadComplete(event) {
+		music = createjs.Sound.play('music', { loop: -1 });
+		music.volume = 0.45;
+	}
 
 }());
